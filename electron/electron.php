@@ -1,0 +1,35 @@
+<?php
+/**
+ * Plugin Mél Electron
+ *
+ * Plugin d'affichage de Mél dans un client Electron en lien avec le plugin Mél_archivage
+ * Les messages sont téléchargés sur le poste de l'utilisateur
+ * Puis copié dans un dossier configuré dans 'Mails archive' 
+ * Du dossier de l'application Electron 
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2
+ * as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ */
+
+class electron extends rcube_plugin
+{
+    function init()
+    {
+        $rcmail = rcmail::get_instance();
+
+        if ($rcmail->task == 'settings' || $rcmail->task == 'mail') {
+            $this->include_script('electron.js');
+            $this->add_texts('localization/', true);
+        }
+    }
+}
