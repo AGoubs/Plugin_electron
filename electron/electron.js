@@ -19,14 +19,11 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-
-let archive_folder = '';
-
 rcmail.addEventListener('init', function (evt) {
-    if (window.rcmail) {
+    if (rcmail.env.iselectron) {
         window.api.send('get_archive_folder')
         window.api.receive('archive_folder', (folder) => {
-            archive_folder = folder;
+            rcmail.env.local_archive_folder = folder;
             createFolder();
             displaySubfolder();
         });
@@ -41,17 +38,17 @@ window.api.receive('new_folder', (folder) => {
 // ----- Ajout des mails dans la liste après archivage -----
 window.api.receive('add_message_row', (row) => {
     row.date = new Date(row.date).toLocaleString('fr-FR', { timeZone: 'UTC' });
-    let flags = { "seen": 1, "ctype": row.content_type, "mbox": archive_folder + "/" + row.mbox };
+    let flags = { "seen": 1, "ctype": row.content_type, "mbox": rcmail.env.local_archive_folder + "/" + row.mbox };
     rcmail.add_message_row(row.id, row, flags, false);
 })
 
 // -----Affiche le dossier des archives -----
 function createFolder() {
     let link = $('<a>').attr('href', '#')
-        .attr('rel', archive_folder)
+        .attr('rel', rcmail.env.local_archive_folder)
         .attr('onClick', "chargementArchivage('')")
-        .html(archive_folder);
-    rcmail.treelist.insert({ id: archive_folder, html: link, classes: ['mailbox'] }, archive_folder, 'mailbox');
+        .html(rcmail.env.local_archive_folder);
+    rcmail.treelist.insert({ id: rcmail.env.local_archive_folder, html: link, classes: ['mailbox'] }, rcmail.env.local_archive_folder, 'mailbox');
 }
 
 // ----- Affiche les sous-dossier des archives -----
@@ -65,7 +62,7 @@ function displaySubfolder() {
                 .attr('rel', subfolder.name)
                 .attr('onClick', "chargementArchivage('" + key + "')")
                 .html(subfolder.name);
-            rcmail.treelist.insert({ id: archive_folder + '/' + key, html: link, classes: ['mailbox'] }, archive_folder, 'mailbox');
+            rcmail.treelist.insert({ id: rcmail.env.local_archive_folder + '/' + key, html: link, classes: ['mailbox'] }, rcmail.env.local_archive_folder, 'mailbox');
             getChildren(subfolder);
         })
     });
@@ -80,7 +77,7 @@ function getChildren(parent) {
                 .attr('rel', key)
                 .attr('onClick', "chargementArchivage('" + key + "')")
                 .html(child.name);
-            rcmail.treelist.insert({ id: archive_folder + '/' + key, html: link, classes: ['mailbox'] }, archive_folder + '/' + parent.relativePath, 'mailbox');
+            rcmail.treelist.insert({ id: rcmail.env.local_archive_folder + '/' + key, html: link, classes: ['mailbox'] }, rcmail.env.local_archive_folder + '/' + parent.relativePath, 'mailbox');
             getChildren(child);
         }
     }
@@ -88,7 +85,7 @@ function getChildren(parent) {
 
 // ----- Changement de l'environnement et chargement de la liste  ----- 
 function chargementArchivage(path) {
-    mbox = (path == '') ? archive_folder : archive_folder + "/" + path;
+    mbox = (path == '') ? rcmail.env.local_archive_folder : rcmail.env.local_archive_folder + "/" + path;
     rcmail.env.mailbox = mbox;
 
     loadArchive(path);
@@ -102,7 +99,7 @@ function chargementArchivage(path) {
                 rows.forEach(row => {
                     if (row.break == 0) {
                         row.date = new Date(row.date).toLocaleString('fr-FR', { timeZone: 'UTC' });
-                        let flags = { "seen": 1, "ctype": row.content_type, "mbox": archive_folder + "/" + row.subfolder };
+                        let flags = { "seen": 1, "ctype": row.content_type, "mbox": rcmail.env.local_archive_folder + "/" + row.subfolder };
                         rcmail.add_message_row(row.id, row, flags, false);
                     }
                 });
@@ -110,7 +107,7 @@ function chargementArchivage(path) {
             else {
                 if (rows.break == 0) {
                     rows.date = new Date(rows.date).toLocaleString('fr-FR', { timeZone: 'UTC' });
-                    let flags = { "seen": 1, "ctype": rows.content_type, "mbox": archive_folder + "/" + rows.subfolder };
+                    let flags = { "seen": 1, "ctype": rows.content_type, "mbox": rcmail.env.local_archive_folder + "/" + rows.subfolder };
                     rcmail.add_message_row(rows.id, rows, flags, false);
                 }
             }
@@ -140,7 +137,7 @@ function loadArchive(path) {
         rcmail.message_list.addEventListener('select', function (list) {
             let uid = list.get_single_selection();
 
-            if (uid == null && rcmail.env.mailbox != archive_folder) {
+            if (uid == null && rcmail.env.mailbox != rcmail.env.local_archive_folder) {
                 document.location.reload();
             }
 

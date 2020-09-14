@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Plugin Mél Electron
  *
@@ -31,5 +32,24 @@ class electron extends rcube_plugin
             $this->include_script('electron.js');
             $this->add_texts('localization/', true);
         }
+
+        $rcmail->output->set_env('iselectron', $this->isElectron());
+    }
+
+    /**
+     * Are we using electron
+     *
+     * @return boolean
+     */
+    public function isElectron()
+    {
+        $useragent = $_SERVER['HTTP_USER_AGENT'];
+        $pos = strpos($useragent, 'Mel_Electron');
+        if ($pos === false) {
+            $isElectron = false;
+        } else {
+            $isElectron = true;
+        }
+        return $isElectron;
     }
 }
