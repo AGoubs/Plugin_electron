@@ -20,20 +20,46 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-if (window.rcmail) {
-    rcmail.addEventListener('responseafterlist', function (evt) {
-        if (rcmail.env.task == 'mail' && rcmail.env.mailbox == 'Archives locale') {
-            loadArchive('');
+let archive_folder = '';
+
+rcmail.addEventListener('init', function (evt) {
+    if (window.rcmail) {
+        window.api.send('get_archive_folder')
+        window.api.receive('archive_folder', (folder) => {
+            archive_folder = folder;
+            createFolder();
             displaySubfolder();
-        }
-    });
+        });
+    }
+});
+
+//  ----- Réaffiche les sous-dossier après archivage d'un nouveau dossier -----
+window.api.receive('new_folder', (folder) => {
+    displaySubfolder();
+})
+
+// ----- Ajout des mails dans la liste après archivage -----
+window.api.receive('add_message_row', (row) => {
+    row.date = new Date(row.date).toLocaleString('fr-FR', { timeZone: 'UTC' });
+    let flags = { "seen": 1, "ctype": row.content_type, "mbox": archive_folder + "/" + row.mbox };
+    rcmail.add_message_row(row.id, row, flags, false);
+})
+
+// -----Affiche le dossier des archives -----
+function createFolder() {
+    let link = $('<a>').attr('href', '#')
+        .attr('rel', archive_folder)
+        .attr('onClick', "chargementArchivage('')")
+        .html(archive_folder);
+    rcmail.treelist.insert({ id: archive_folder, html: link, classes: ['mailbox'] }, archive_folder, 'mailbox');
 }
 
+// ----- Affiche les sous-dossier des archives -----
 function displaySubfolder() {
     window.api.send('subfolder');
     window.api.receive('listSubfolder', (subfolders) => {
         if (!subfolders) {
-            loadArchive('');
+            chargementArchivage('');
         }
         else {
             subfolders.forEach(subfolder => {
@@ -41,9 +67,9 @@ function displaySubfolder() {
                 let key = subfolder.relativePath;
                 let link = $('<a>').attr('href', '#')
                     .attr('rel', subfolder.name)
-                    .attr('onClick', "loadArchive('" + key + "')")
+                    .attr('onClick', "chargementArchivage('" + key + "')")
                     .html(subfolder.name);
-                rcmail.treelist.insert({ id: 'Archives locale/' + key, html: link, classes: ['mailbox'] }, 'Archives locale', 'mailbox');
+                rcmail.treelist.insert({ id: archive_folder + '/' + key, html: link, classes: ['mailbox'] }, archive_folder, 'mailbox');
                 getChildren(subfolder);
             })
         }
@@ -57,14 +83,47 @@ function getChildren(parent) {
             let key = child.relativePath;
             let link = $('<a>').attr('href', '#')
                 .attr('rel', key)
-                .attr('onClick', "loadArchive('" + key + "')")
+                .attr('onClick', "chargementArchivage('" + key + "')")
                 .html(child.name);
-            rcmail.treelist.insert({ id: 'Archives locale/' + key, html: link, classes: ['mailbox'] }, 'Archives locale/' + parent.relativePath, 'mailbox');
+            rcmail.treelist.insert({ id: archive_folder + '/' + key, html: link, classes: ['mailbox'] }, archive_folder + '/' + parent.relativePath, 'mailbox');
             getChildren(child);
         }
     }
 }
 
+// ----- Changement de l'environnement et chargement de la liste  ----- 
+function chargementArchivage(path) {
+    mbox = (path == '') ? archive_folder : archive_folder + "/" + path;
+    rcmail.env.mailbox = mbox;
+
+    loadArchive(path);
+
+    $("[name ='rcmqsearchform']").removeAttr('onsubmit').submit(function (e) {
+        e.preventDefault();
+        window.api.send('search_list', $('#quicksearchbox').val());
+        window.api.receive('result_search', (rows) => {
+            rcmail.message_list.clear();
+            if (rows.length > 0) {
+                rows.forEach(row => {
+                    if (row.break == 0) {
+                        row.date = new Date(row.date).toLocaleString('fr-FR', { timeZone: 'UTC' });
+                        let flags = { "seen": 1, "ctype": row.content_type, "mbox": archive_folder + "/" + row.subfolder };
+                        rcmail.add_message_row(row.id, row, flags, false);
+                    }
+                });
+            }
+            else {
+                if (rows.break == 0) {
+                    rows.date = new Date(rows.date).toLocaleString('fr-FR', { timeZone: 'UTC' });
+                    let flags = { "seen": 1, "ctype": rows.content_type, "mbox": archive_folder + "/" + rows.subfolder };
+                    rcmail.add_message_row(rows.id, rows, flags, false);
+                }
+            }
+        });
+    });
+}
+
+// ----- Affiche la liste des messages d'un dossier -----
 function loadArchive(path) {
     window.api.send('read_mail_dir', path)
     document.body.classList.add('busy-cursor');
@@ -73,11 +132,10 @@ function loadArchive(path) {
         mails.forEach((mail) => {
             if (mail.break == 0) {
                 mail.date = new Date(mail.date).toLocaleString('fr-FR', { timeZone: 'UTC' });
-                let flags = { "seen": 1, "ctype": mail.content_type, "mbox": "Archives locale" };
+                let flags = { "seen": 1, "ctype": mail.content_type, "mbox": mbox };
                 rcmail.add_message_row(mail.id, mail, flags, false);
             }
         });
-        rcmail.set_rowcount(rcmail.message_list.rowcount, "Archives locale")
         document.body.classList.remove('busy-cursor');
     })
     if (rcmail.message_list) {
@@ -87,25 +145,22 @@ function loadArchive(path) {
         rcmail.message_list.addEventListener('select', function (list) {
             let uid = list.get_single_selection();
 
-            if (uid == null && rcmail.env.mailbox != 'Archives locale') {
+            if (uid == null && rcmail.env.mailbox != archive_folder) {
                 document.location.reload();
             }
 
-            if (rcmail.env.task == 'mail' && rcmail.env.mailbox == 'Archives locale') {
-
-                //Premier index de message_list = MA au lieu de 0
-                if (uid == "MA") {
-                    uid = 0;
-                }
-                window.api.send('mail_select', uid)
-
-                document.body.classList.add('busy-cursor');
-                window.api.receive('mail_return', (mail) => {
-                    let body = $("#mainscreen").contents().find('#mailview-bottom');
-                    body.html(mail);
-                    document.body.classList.remove('busy-cursor');
-                });
+            //Premier index de message_list = MA au lieu de 0
+            if (uid == "MA") {
+                uid = 0;
             }
+            window.api.send('mail_select', uid)
+
+            document.body.classList.add('busy-cursor');
+            window.api.receive('mail_return', (mail) => {
+                let body = $("#mainscreen").contents().find('#mailview-bottom');
+                body.html(mail);
+                document.body.classList.remove('busy-cursor');
+            });
         });
     }
 };
@@ -118,3 +173,4 @@ function openAttachment(uid, partid) {
         document.body.classList.remove('busy-cursor');
     });
 }
+
