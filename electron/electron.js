@@ -58,21 +58,16 @@ function createFolder() {
 function displaySubfolder() {
     window.api.send('subfolder');
     window.api.receive('listSubfolder', (subfolders) => {
-        if (!subfolders) {
-            chargementArchivage('');
-        }
-        else {
-            subfolders.forEach(subfolder => {
-                subfolder.relativePath = subfolder.relativePath.replace(/\\/g, "/");
-                let key = subfolder.relativePath;
-                let link = $('<a>').attr('href', '#')
-                    .attr('rel', subfolder.name)
-                    .attr('onClick', "chargementArchivage('" + key + "')")
-                    .html(subfolder.name);
-                rcmail.treelist.insert({ id: archive_folder + '/' + key, html: link, classes: ['mailbox'] }, archive_folder, 'mailbox');
-                getChildren(subfolder);
-            })
-        }
+        subfolders.forEach(subfolder => {
+            subfolder.relativePath = subfolder.relativePath.replace(/\\/g, "/");
+            let key = subfolder.relativePath;
+            let link = $('<a>').attr('href', '#')
+                .attr('rel', subfolder.name)
+                .attr('onClick', "chargementArchivage('" + key + "')")
+                .html(subfolder.name);
+            rcmail.treelist.insert({ id: archive_folder + '/' + key, html: link, classes: ['mailbox'] }, archive_folder, 'mailbox');
+            getChildren(subfolder);
+        })
     });
 }
 function getChildren(parent) {
