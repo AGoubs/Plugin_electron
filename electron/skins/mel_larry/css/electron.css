@@ -1,0 +1,33 @@
+#mailboxlist.folderlist li.mailbox.archives_locales div.treetoggle {
+	left: 15px;
+}
+
+.folderlist li.mailbox.archives_locales > a {
+    background: url(../images/dossier.png) 17px center no-repeat;
+}
+
+#mailboxlist.folderlist li.mailbox.archives_locales > a {
+    background-position: 27px 3px;
+}
+
+.folderlist li.mailbox.archives_locales.selected > a, 
+.folderlist li.mailbox.archives_locales > a:focus {
+    background: url(../images/dossier_selectionne.png) 17px center no-repeat #fff;
+    background-color: var(--listitem-selected-bg-color);
+}
+
+#mailboxlist.folderlist li.mailbox.archives_locales.selected > a, 
+#mailboxlist.folderlist li.mailbox.archives_locales > a:focus {
+    background-position: 27px 3px;
+}
+
+@media (prefers-color-scheme: dark) {
+    .folderlist li.mailbox.archives_locales > a {
+	    background-image: url(../images/dossier-dark.png);
+	}
+	
+	.folderlist li.mailbox.archives_locales.selected > a, 
+	.folderlist li.mailbox.archives_locales > a:focus {
+	    background-image: url(../images/dossier_selectionne-dark.png);
+	}
+}

@@ -29,10 +29,12 @@ class electron extends rcube_plugin
         $rcmail = rcmail::get_instance();
 
         if ($rcmail->task == 'settings' || $rcmail->task == 'mail') {
+            $skin_path = $this->local_skin_path();
+            $this->include_stylesheet($skin_path . '/css/electron.css');
+
             $this->include_script('electron.js');
             $this->add_texts('localization/', true);
         }
-
         $rcmail->output->set_env('iselectron', $this->isElectron());
     }
 

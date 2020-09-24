@@ -73,7 +73,8 @@ function createFolder() {
         .attr('rel', rcmail.env.local_archive_folder)
         .attr('onClick', "chargementArchivage('')")
         .html(rcmail.env.local_archive_folder);
-    rcmail.treelist.insert({ id: rcmail.env.local_archive_folder, html: link, classes: ['mailbox'] }, rcmail.env.local_archive_folder, 'mailbox');
+    console.log(rcmail.treelist);
+    rcmail.treelist.insert({ id: rcmail.env.local_archive_folder, html: link, classes: ['mailbox archives_locales'] }, null);
 }
 
 // ----- Affiche les sous-dossier des archives -----
@@ -87,7 +88,7 @@ function displaySubfolder() {
                 .attr('rel', subfolder.name)
                 .attr('onClick', "chargementArchivage('" + key + "')")
                 .html(subfolder.name);
-            rcmail.treelist.insert({ id: rcmail.env.local_archive_folder + '/' + key, html: link, classes: ['mailbox'] }, rcmail.env.local_archive_folder, 'mailbox');
+            rcmail.treelist.insert({ id: rcmail.env.local_archive_folder + '/' + key, html: link, classes: ['mailbox'] }, rcmail.env.local_archive_folder);
             getChildren(subfolder);
         })
     });
