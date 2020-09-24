@@ -28,32 +28,13 @@ rcmail.addEventListener('init', function (evt) {
             displaySubfolder();
         });
 
-        //Système de recherche des mails
-        $("[name ='rcmqsearchform']").removeAttr('onsubmit').submit(function (e) {
-            e.preventDefault();
-            window.api.send('search_list', { "value": $('#quicksearchbox').val(), "subfolder": rcmail.env.mailbox.replace(rcmail.env.local_archive_folder + "/", "") });
-            window.api.receive('result_search', (rows) => {
-                rcmail.message_list.clear();
-                if (rows.length > 0) {
-                    rows.forEach(row => {
-                        if (row.break == 0) {
-                            row.date = new Date(row.date).toLocaleString('fr-FR', { timeZone: 'UTC' });
-                            let flags = { "seen": 1, "ctype": row.content_type, "mbox": rcmail.env.local_archive_folder + "/" + row.subfolder };
-                            rcmail.add_message_row(row.id, row, flags, false);
-                        }
-                    });
-                }
-                else {
-                    if (rows.break == 0) {
-                        rows.date = new Date(rows.date).toLocaleString('fr-FR', { timeZone: 'UTC' });
-                        let flags = { "seen": 1, "ctype": rows.content_type, "mbox": rcmail.env.local_archive_folder + "/" + rows.subfolder };
-                        rcmail.add_message_row(rows.id, rows, flags, false);
-                    }
-                }
-            });
-        });
+
+
+
     }
 });
+
+
 
 //  ----- Réaffiche les sous-dossier après archivage d'un nouveau dossier -----
 window.api.receive('new_folder', (folder) => {
@@ -115,6 +96,37 @@ function chargementArchivage(path) {
     rcmail.env.mailbox = mbox;
 
     loadArchive(path);
+
+    //Système de recherche des mails
+    $("[name ='rcmqsearchform']").removeAttr('onsubmit').submit(function (e) {
+        e.preventDefault();
+        window.api.send('search_list', { "value": $('#quicksearchbox').val(), "subfolder": rcmail.env.mailbox.replace(rcmail.env.local_archive_folder + "/", "") });
+        window.api.receive('result_search', (rows) => {
+            rcmail.message_list.clear();
+            if (rows.length > 0) {
+                rows.forEach(row => {
+                    if (row.break == 0) {
+                        row.date = new Date(row.date).toLocaleString('fr-FR', { timeZone: 'UTC' });
+                        let flags = { "seen": 1, "ctype": row.content_type, "mbox": rcmail.env.local_archive_folder + "/" + row.subfolder };
+                        rcmail.add_message_row(row.id, row, flags, false);
+                    }
+                });
+            }
+            else {
+                if (rows.break == 0) {
+                    rows.date = new Date(rows.date).toLocaleString('fr-FR', { timeZone: 'UTC' });
+                    let flags = { "seen": 1, "ctype": rows.content_type, "mbox": rcmail.env.local_archive_folder + "/" + rows.subfolder };
+                    rcmail.add_message_row(rows.id, rows, flags, false);
+                }
+            }
+        });
+    });
+
+    $("#searchreset").on('click', function (e) {
+        e.preventDefault();
+        rcmail.message_list.clear();
+        loadArchive(path);
+    });
 }
 
 // ----- Affiche la liste des messages d'un dossier -----
