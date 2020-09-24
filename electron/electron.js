@@ -54,8 +54,9 @@ function createFolder() {
         .attr('rel', rcmail.env.local_archive_folder)
         .attr('onClick', "chargementArchivage('')")
         .html(rcmail.env.local_archive_folder);
-    console.log(rcmail.treelist);
-    rcmail.treelist.insert({ id: rcmail.env.local_archive_folder, html: link, classes: ['mailbox archives_locales'] }, null);
+
+        rcmail.treelist.insert({ id: rcmail.env.local_archive_folder, html: link, classes: ['mailbox archives_locales'] });
+        $( "li.archives_locales" ).detach().insertAfter( $( "li.trash" ) );
 }
 
 // ----- Affiche les sous-dossier des archives -----
