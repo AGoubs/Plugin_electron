@@ -54,9 +54,18 @@ window.api.receive('download-count', (count) => {
     message_archivage = rcmail.display_message(`Nombre de mails restants : ${count}`, 'loading');
 })
 
-window.parent.api.receive('download-finish', () => {
+window.parent.api.receive('download-finish', (files) => {
+    console.log(files);
     rcmail.hide_message(message_archivage);
     rcmail.display_message('Fin du téléchargement des archives', 'confirmation');
+
+    files.forEach(file => {
+        let mail = rcmail.params_from_uid(file.uid)
+        rcmail.http_post('mail/delete', {
+            _mbox: mail._mbox,
+            _uid: mail._uid,
+        });
+    })
 });
 
 // -----Affiche le dossier des archives -----
