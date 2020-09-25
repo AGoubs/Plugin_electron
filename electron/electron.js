@@ -54,8 +54,8 @@ window.api.receive('download-count', (count) => {
     message_archivage = rcmail.display_message(`Nombre de mails restants : ${count}`, 'loading');
 })
 
+// ----- Suppression des mails après archivage -----
 window.parent.api.receive('download-finish', (files) => {
-    console.log(files);
     rcmail.hide_message(message_archivage);
     rcmail.display_message('Fin du téléchargement des archives', 'confirmation');
 
