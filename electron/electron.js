@@ -48,6 +48,18 @@ window.api.receive('add_message_row', (row) => {
     rcmail.add_message_row(row.id, row, flags, false);
 })
 
+// ----- Avancement de l'archivage -----
+let message_archivage = '';
+window.api.receive('download-count', (count) => {
+    rcmail.hide_message(message_archivage);
+    message_archivage = rcmail.display_message(`Nombre de mails restants : ${count}`, 'loading');
+})
+
+window.parent.api.receive('download-finish', () => {
+    rcmail.hide_message(message_archivage);
+    rcmail.display_message('Fin du téléchargement des archives', 'confirmation');
+});
+
 // -----Affiche le dossier des archives -----
 function createFolder() {
     let link = $('<a>').attr('href', '#')

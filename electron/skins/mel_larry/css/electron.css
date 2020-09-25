@@ -18,9 +18,9 @@
 	background-color: var(--listitem-selected-bg-color);
 }
 
-#mailboxlist.folderlist li.mailbox.trash.selected > a, 
-#mailboxlist.folderlist li.mailbox.trash > a:focus {
-    background-position: 32px 7px;
+#mailboxlist.folderlist li.mailbox.archives_locales.selected > a, 
+#mailboxlist.folderlist li.mailbox.archives_locales > a:focus {
+	background: url(../images/dossier_selectionne.png) 32px 7px no-repeat var(--listitem-selected-bg-color);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -28,8 +28,9 @@
 	    background-image: url(../images/dossier-dark.png);
 	}
 	
-	.folderlist li.mailbox.archives_locales.selected > a, 
-	.folderlist li.mailbox.archives_locales > a:focus {
-		background-image: url(../images/dossier_selectionne-dark.png);
-	}
+		#mailboxlist.folderlist li.mailbox.archives_locales.selected > a, 
+		#mailboxlist.folderlist li.mailbox.archives_locales > a:focus {
+			background: url(../images/dossier_selectionne-dark.png) 32px 7px no-repeat var(--listitem-selected-bg-color);
+		}
+
 }
