@@ -42,9 +42,7 @@ window.api.receive('new_folder', (folder) => {
 
 // ----- Ajout des mails dans la liste après archivage -----
 window.api.receive('add_message_row', (row) => {
-    row.date = new Date(row.date).toLocaleString('fr-FR', { timeZone: 'UTC' });
-    let flags = { "seen": 1, "ctype": row.content_type, "mbox": rcmail.env.local_archive_folder + "/" + row.mbox };
-    rcmail.add_message_row(row.id, row, flags, false);
+    addMessageRow(row, rcmail.env.local_archive_folder + "/" + row.mbox)
 })
 
 // ----- Avancement de l'archivage -----
@@ -76,7 +74,9 @@ function createFolder() {
         .html(rcmail.env.local_archive_folder);
 
     rcmail.treelist.insert({ id: rcmail.env.local_archive_folder, html: link, classes: ['mailbox archives_locales'] });
-    $("li.archives_locales").detach().insertAfter($("li.trash"));
+    if ($("li.trash").length) {
+        $("li.archives_locales").detach().insertAfter($("li.trash"));
+    }
 }
 
 // ----- Affiche les sous-dossier des archives -----
@@ -127,17 +127,13 @@ function chargementArchivage(path) {
             if (rows.length > 0) {
                 rows.forEach(row => {
                     if (row.break == 0) {
-                        row.date = new Date(row.date).toLocaleString('fr-FR', { timeZone: 'UTC' });
-                        let flags = { "seen": 1, "ctype": row.content_type, "mbox": rcmail.env.local_archive_folder + "/" + row.subfolder };
-                        rcmail.add_message_row(row.id, row, flags, false);
+                        addMessageRow(row, rcmail.env.local_archive_folder + "/" + row.subfolder);
                     }
                 });
             }
             else {
                 if (rows.break == 0) {
-                    rows.date = new Date(rows.date).toLocaleString('fr-FR', { timeZone: 'UTC' });
-                    let flags = { "seen": 1, "ctype": rows.content_type, "mbox": rcmail.env.local_archive_folder + "/" + rows.subfolder };
-                    rcmail.add_message_row(rows.id, rows, flags, false);
+                    addMessageRow(rows, rcmail.env.local_archive_folder + "/" + row.subfolder);
                 }
             }
         });
@@ -153,17 +149,15 @@ function chargementArchivage(path) {
 // ----- Affiche la liste des messages d'un dossier -----
 function loadArchive(path) {
     window.api.send('read_mail_dir', path)
-    document.body.classList.add('busy-cursor');
-
     window.api.receive('mail_dir', (mails) => {
         mails.forEach((mail) => {
             if (mail.break == 0) {
-                mail.date = new Date(mail.date).toLocaleString('fr-FR', { timeZone: 'UTC' });
-                let flags = { "seen": 1, "ctype": mail.content_type, "mbox": mbox };
-                rcmail.add_message_row(mail.id, mail, flags, false);
+                addMessageRow(mail, mbox);
             }
         });
-        document.body.classList.remove('busy-cursor');
+
+        read_unread();
+        flag_unflagged();
     })
     if (rcmail.message_list) {
         rcmail.message_list.clear();
@@ -189,6 +183,9 @@ function loadArchive(path) {
                 document.body.classList.remove('busy-cursor');
             });
         });
+
+
+
     }
 };
 
@@ -201,3 +198,46 @@ function openAttachment(uid, partid) {
     });
 }
 
+function addMessageRow(row, mbox) {
+    row.date = new Date(row.date).toLocaleString('fr-FR', { timeZone: 'UTC' });
+    let etiquettes = JSON.parse(row.etiquettes);
+    let seen = etiquettes.SEEN ? 1 : 0;
+    let flagged = etiquettes.FLAGGED ? 1 : 0;
+    let flags = { "flagged": flagged, "seen": seen, "ctype": row.content_type, "mbox": mbox };
+    rcmail.add_message_row(row.id, row, flags, false);
+}
+
+//Gestion des lus/non lus
+function read_unread() {
+    $("span[id*='msgicnrcmrow']").unbind('click');
+    $("span[id*='msgicnrcmrow']").click(function () {
+        let seen = $(this).hasClass('unread') ? true : false;
+        let flagged = $(this).closest('tr').hasClass('flagged') ? true : false;
+        $(this).toggleClass('unread');
+        $(this).closest('tr').toggleClass('unread');
+        let uid = $(this).next().attr('href').split('&')[2].split('=')[1];
+        window.api.send('read_unread', { "uid": uid, "SEEN": seen, "FLAGGED": flagged });
+        rcmail.display_message('Courriels marqués avec succès', 'confirmation');
+    })
+}
+
+//Gestion des flags
+function flag_unflagged() {
+    $("span[id*='flagicnrcmrow']").unbind('click');
+    $("span[id*='flagicnrcmrow']").click(function () {
+        let flagged = $(this).hasClass('flagged') ? false : true;
+        if (!flagged) {
+            $(this).addClass('unflagged').removeClass('flagged');
+        }
+        else {
+            $(this).addClass('flagged').removeClass('unflagged');
+        }
+        $(this).closest('tr').toggleClass('flagged');
+
+        let seen = $(this).closest('tr').hasClass('unread') ? false : true;
+
+        let uid = $(this).closest('tr').find('a').attr('href').split('&')[2].split('=')[1];
+        window.api.send('flag_unflagged', { "uid": uid, "SEEN": seen, "FLAGGED": flagged });
+        rcmail.display_message('Courriels marqués avec succès', 'confirmation');
+    })
+}
